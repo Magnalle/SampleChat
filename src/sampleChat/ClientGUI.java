@@ -4,11 +4,18 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 
 public class ClientGUI extends JFrame implements ActionListener, Thread.UncaughtExceptionHandler {
 
     private static final int WIDTH = 400;
     private static final int HEIGHT = 300;
+    private static final String LOG_FILE_NAME = "log.txt";
 
     private final JTextArea log = new JTextArea();
     private final JPanel panelTop = new JPanel(new GridLayout(2, 3));
@@ -38,6 +45,8 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
         userList.setListData(users);
         scrollUser.setPreferredSize(new Dimension(100, 0));
         cbAlwaysOnTop.addActionListener(this);
+        btnSend.addActionListener(this);
+        tfMessage.addActionListener(this);
 
         panelTop.add(tfIPAddress);
         panelTop.add(tfPort);
@@ -54,6 +63,7 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
         add(panelTop, BorderLayout.NORTH);
         add(panelBottom, BorderLayout.SOUTH);
 
+        log.setEditable(false);
         setVisible(true);
     }
 
@@ -71,7 +81,10 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
         Object src = e.getSource();
         if (src == cbAlwaysOnTop) {
             setAlwaysOnTop(cbAlwaysOnTop.isSelected());
-        } else {
+        } else if (src == btnSend || src == tfMessage) {
+            addToLog(tfLogin.getText() + ": " + tfMessage.getText() + "\n");
+        }
+        else {
             throw new RuntimeException("Unknown action source: " + src);
         }
     }
@@ -86,5 +99,16 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
                 e.getMessage() + "\n\t at " + ste[0];
         JOptionPane.showMessageDialog(this, msg, "Exception", JOptionPane.ERROR_MESSAGE);
         System.exit(1);
+    }
+
+    private void addToLog(String message){
+        try(PrintStream printStream = new PrintStream(new FileOutputStream(LOG_FILE_NAME, true), true, "windows-1251")) {
+            printStream.print(message);
+            log.append(message);
+            tfMessage.setText("");
+        }
+        catch(Throwable e) {
+            throw new RuntimeException("Can't write to log file!");
+        }
     }
 }
