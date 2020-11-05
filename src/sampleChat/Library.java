@@ -8,6 +8,7 @@ public class Library {
     /broadcast±msg
     /msg_format_error±msg
     /user_list±u1±u2±u3±u4....
+    /unautorized
     * */
 
     public static final int MSG_TYPE_INDEX = 0;
@@ -22,6 +23,7 @@ public class Library {
     // то есть сообщение, которое будет посылаться всем
     public static final String USER_LIST = "/user_list";
     public static final String CLIENT_BCAST_MSG = "/client_broadcast";
+    public static final String UNAUTORIZED = "/unautorized";
 
     public static String getTypeBcastClient(String msg) {
         return CLIENT_BCAST_MSG + DELIMITER + msg;
@@ -51,6 +53,10 @@ public class Library {
     public static String getTypeBroadcast(String src, String message) {
         return SERVER_BCAST_MSG + DELIMITER + System.currentTimeMillis() +
                 DELIMITER + src + DELIMITER + message;
+    }
+
+    public static String getUnautorizedConnectRequest(){
+        return UNAUTORIZED;
     }
 
 

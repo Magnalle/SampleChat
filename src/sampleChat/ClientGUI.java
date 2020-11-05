@@ -26,8 +26,8 @@ public class ClientGUI extends JFrame implements ActionListener,
     private final JTextField tfIPAddress = new JTextField("127.0.0.1");
     private final JTextField tfPort = new JTextField("8189");
     private final JCheckBox cbAlwaysOnTop = new JCheckBox("Always on top");
-    private final JTextField tfLogin = new JTextField("ivan");
-    private final JPasswordField tfPassword = new JPasswordField("123");
+    private final JTextField tfLogin = new JTextField("");
+    private final JPasswordField tfPassword = new JPasswordField("");
     private final JButton btnLogin = new JButton("Login");
 
     private final JPanel panelBottom = new JPanel(new BorderLayout());
@@ -101,11 +101,19 @@ public class ClientGUI extends JFrame implements ActionListener,
     }
 
     private void connect() {
-        try {
-            Socket socket = new Socket(tfIPAddress.getText(), Integer.parseInt(tfPort.getText()));
-            socketThread = new SocketThread("Client", this, socket);
-        } catch (IOException e) {
-            showException(Thread.currentThread(), e);
+        if(socketThread != null){
+            String login = tfLogin.getText();
+            String password = new String(tfPassword.getPassword());
+            socketThread.sendMessage(Library.getAuthRequest(login, password));
+            panelBottom.setVisible(true);
+            panelTop.setVisible(false);
+        }else {
+            try {
+                Socket socket = new Socket(tfIPAddress.getText(), Integer.parseInt(tfPort.getText()));
+                socketThread = new SocketThread("Client", this, socket);
+            } catch (IOException e) {
+                showException(Thread.currentThread(), e);
+            }
         }
     }
 
@@ -164,6 +172,7 @@ public class ClientGUI extends JFrame implements ActionListener,
                 break;
             case Library.AUTH_DENIED:
                 putLog(msg);
+                socketThread.close();
                 break;
             case Library.MSG_FORMAT_ERROR:
                 putLog(msg);
@@ -206,16 +215,25 @@ public class ClientGUI extends JFrame implements ActionListener,
         panelTop.setVisible(true);
         setTitle(WINDOW_TITLE);
         userList.setListData(new String[0]);
+        socketThread = null;
     }
 
     @Override
     public void onSocketReady(SocketThread thread, Socket socket) {
-        panelBottom.setVisible(true);
-        panelTop.setVisible(false);
         String login = tfLogin.getText();
         String password = new String(tfPassword.getPassword());
-        thread.sendMessage(Library.getAuthRequest(login, password));
+        if(login.isEmpty() && password.isEmpty()) {
+            thread.sendMessage(Library.getUnautorizedConnectRequest());
+            panelBottom.setVisible(true);
+        }
+        else {
+            thread.sendMessage(Library.getAuthRequest(login, password));
+            panelBottom.setVisible(true);
+            panelTop.setVisible(false);
+        }
+
     }
+
 
     @Override
     public void onReceiveString(SocketThread thread, Socket socket, String msg) {
