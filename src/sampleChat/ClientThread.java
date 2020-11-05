@@ -4,12 +4,15 @@ import java.net.Socket;
 
 public class ClientThread extends SocketThread {
 
+    public final long LIVE_TIME_MILLI = 120_000L;
     private String nickname;
     private boolean isAuthorized;
     private boolean isReconnecting;
+    private Long connectingTime;
 
     public ClientThread(SocketThreadListener listener, String name, Socket socket) {
         super(name, listener, socket);
+        connectingTime = System.currentTimeMillis();
     }
 
     public boolean isReconnecting() {
@@ -45,4 +48,11 @@ public class ClientThread extends SocketThread {
         close();
     }
 
+    void unautorizedConnect(){
+        this.nickname = "Anonymous";
+    }
+
+    public boolean isTimeUp(){
+        return System.currentTimeMillis() - connectingTime > LIVE_TIME_MILLI;
+    }
 }
